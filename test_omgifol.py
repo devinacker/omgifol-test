@@ -1,7 +1,7 @@
 print('Omgifol Unit Tests')
 
 import unittest, omg, random
-from PIL import Image
+from PIL import Image, ImageChops
 import pdb
 
 # class TestColormap(unittest.TestCase):
@@ -38,11 +38,17 @@ class TestLump(unittest.TestCase):
         test = omg.lump.Graphic()
         image = self.testgfx.to_Image()
         
-        # just make sure this doesn't throw anything since they probably won't end up
-        # 100% identical internally
+        # test without remapping palette (both images already use the same default palette)
+        test.from_Image(image)
+        new_image = test.to_Image()
+        diff = ImageChops.difference(new_image, image).getbbox()
+        self.assertTrue(diff is None)
+        
+        # test with palette mapping
         test.from_Image(image, translate=True)
-        #test.to_Image().show()
-        #image.show()
+        new_image = test.to_Image()
+        diff = ImageChops.difference(new_image.convert("RGB"), image.convert("RGB")).getbbox()
+        self.assertTrue(diff is None)
 
 class TestMapeditReading(unittest.TestCase):
     def setUp(self):
