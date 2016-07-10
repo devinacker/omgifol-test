@@ -1,7 +1,8 @@
 print('Omgifol Unit Tests')
 
 import unittest, omg, random
-
+from PIL import Image
+import pdb
 
 # class TestColormap(unittest.TestCase):
 #     def setUp(self):
@@ -14,12 +15,34 @@ import unittest, omg, random
 #         #self.assertTrue(lump is omg.Lump)
 
 
-# class TestLump(unittest.TestCase):
-#     def setUp(self):
-#         pass
+class TestLump(unittest.TestCase):
+    def setUp(self):
+        testwad = omg.WAD('test.wad')
+        self.testgfx = testwad.graphics['HELP1']
 
-#     def test_farts(self):
-#         pass
+    def test_graphic_attr(self):
+        self.testgfx.offsets = (25, 50)
+        self.assertTrue(self.testgfx.x_offset == 25)
+        self.assertTrue(self.testgfx.y_offset == 50)
+        
+        self.assertTrue(self.testgfx.dimensions == (320, 200))
+
+    def test_graphic_raw(self):
+        test = omg.lump.Graphic()
+        raw = self.testgfx.to_raw()
+        
+        test.from_raw(raw, *self.testgfx.dimensions)
+        self.assertTrue(test.to_raw() == raw)
+    
+    def test_graphic_Image(self):
+        test = omg.lump.Graphic()
+        image = self.testgfx.to_Image()
+        
+        # just make sure this doesn't throw anything since they probably won't end up
+        # 100% identical internally
+        test.from_Image(image, translate=True)
+        #test.to_Image().show()
+        #image.show()
 
 class TestMapeditReading(unittest.TestCase):
     def setUp(self):
@@ -53,14 +76,14 @@ class TestMapeditDrawSector(unittest.TestCase):
         self.assertTrue(len(self.m.sidedefs) == 4)
         self.assertTrue(len(self.m.sectors) == 1)
         
-    def test_draw_sector_return_value(self):
-        verts = []
-        verts.append(omg.mapedit.Vertex(x=0,y=0))
-        verts.append(omg.mapedit.Vertex(x=64,y=0))
-        verts.append(omg.mapedit.Vertex(x=64,y=64))
-        verts.append(omg.mapedit.Vertex(x=0,y=64))
-        lines = self.m.draw_sector(verts)
-        self.assertTrue(len(lines)==4)
+#    def test_draw_sector_return_value(self):
+#        verts = []
+#        verts.append(omg.mapedit.Vertex(x=0,y=0))
+#        verts.append(omg.mapedit.Vertex(x=64,y=0))
+#        verts.append(omg.mapedit.Vertex(x=64,y=64))
+#        verts.append(omg.mapedit.Vertex(x=0,y=64))
+#        lines = self.m.draw_sector(verts)
+#        self.assertTrue(len(lines)==4)
 
     def test_draw_many_sectors(self):
         for x in range(100):
