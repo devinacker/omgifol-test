@@ -1,24 +1,40 @@
 print('Omgifol Unit Tests')
 
-import unittest, omg, random
+import unittest, random
+import omg, omg.colormap, omg.playpal
+
 from PIL import Image, ImageChops
 import pdb
 
-# class TestColormap(unittest.TestCase):
-#     def setUp(self):
-#         pass
-#         #self.col = omg.colormap.Colormap()
+class TestColormap(unittest.TestCase):
+    def setUp(self):
+        testwad = omg.WAD('test.wad')
+        self.testcol = testwad.data['COLORMAP']
+        self.col = omg.colormap.Colormap()
 
-#     def test_to_lump(self):
-#         pass
-#         #lump = self.col.to_lump()
-#         #self.assertTrue(lump is omg.Lump)
-
-
+    def test_lump(self):
+        self.col.from_lump(self.testcol)
+        lump = self.col.to_lump()
+        
+        self.assertTrue(isinstance(lump, omg.Lump))
+        # compare default constructed colormap against one from test.wad
+        self.assertTrue(lump.data == self.testcol.data)
+    
+    def test_build(self):
+        self.col = omg.colormap.Colormap()
+        self.col.build_fade()
+        self.col.build_invuln()
+        
 class TestLump(unittest.TestCase):
     def setUp(self):
         testwad = omg.WAD('test.wad')
         self.testgfx = testwad.graphics['HELP1']
+
+    def test_copy(self):
+        copy = self.testgfx.copy()
+        
+        self.assertTrue(copy is not self.testgfx)
+        self.assertTrue(copy.to_raw() == self.testgfx.to_raw())
 
     def test_graphic_attr(self):
         self.testgfx.offsets = (25, 50)
@@ -114,12 +130,23 @@ class TestMapeditDrawSector(unittest.TestCase):
 #         pass
 
 
-# class TestPlaypal(unittest.TestCase):
-#     def setUp(self):
-#         pass
+class TestPlaypal(unittest.TestCase):
+    def setUp(self):
+        testwad = omg.WAD('test.wad')
+        self.testpal = testwad.data['PLAYPAL']
+        self.pal = omg.playpal.Playpal()
 
-#     def test_farts(self):
-#         pass
+    def test_lump(self):
+        self.pal.from_lump(self.testpal)
+        lump = self.pal.to_lump()
+        
+        self.assertTrue(isinstance(lump, omg.Lump))
+        # compare default constructed palette against one from test.wad
+        self.assertTrue(lump.data == self.testpal.data)
+    
+    def test_build(self):
+        self.pal = omg.playpal.Playpal()
+        self.pal.build_defaults()
 
 
 # class TestTxdef(unittest.TestCase):
