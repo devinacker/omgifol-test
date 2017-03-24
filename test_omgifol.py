@@ -1,58 +1,63 @@
 print('Omgifol Unit Tests')
 
 import unittest, random
-import omg, omg.colormap, omg.playpal
+import omg, omg.colormap, omg.playpal, omg.txdef
 
 from PIL import Image, ImageChops
 import pdb
 
-class TestColormap(unittest.TestCase):
+class OmgifolTest(unittest.TestCase):
     def setUp(self):
-        testwad = omg.WAD('test.wad')
-        self.testcol = testwad.data['COLORMAP']
-        self.col = omg.colormap.Colormap()
+        self.wad = omg.WAD('test.wad')
 
-    def test_lump(self):
-        self.col.from_lump(self.testcol)
-        lump = self.col.to_lump()
+    #
+    # colormap
+    #
+    def test_colormap(self):
+        testcol = self.wad.data['COLORMAP']
+        col = omg.colormap.Colormap()
+        col.from_lump(testcol)
+        lump = col.to_lump()
         
         self.assertTrue(isinstance(lump, omg.Lump))
         # compare default constructed colormap against one from test.wad
-        self.assertTrue(lump.data == self.testcol.data)
+        self.assertTrue(lump.data == testcol.data)
     
-    def test_build(self):
-        self.col = omg.colormap.Colormap()
-        self.col.build_fade()
-        self.col.build_invuln()
+    def test_colormap_build(self):
+        col = omg.colormap.Colormap()
+        col.build_fade()
+        col.build_invuln()
+    
+    #
+    # graphic lumps
+    #
+    def test_graphic_copy(self):
+        testgfx = self.wad.graphics['HELP1']
+        copy = testgfx.copy()
         
-class TestLump(unittest.TestCase):
-    def setUp(self):
-        testwad = omg.WAD('test.wad')
-        self.testgfx = testwad.graphics['HELP1']
-
-    def test_copy(self):
-        copy = self.testgfx.copy()
-        
-        self.assertTrue(copy is not self.testgfx)
-        self.assertTrue(copy.to_raw() == self.testgfx.to_raw())
+        self.assertTrue(copy is not testgfx)
+        self.assertTrue(copy.to_raw() == testgfx.to_raw())
 
     def test_graphic_attr(self):
-        self.testgfx.offsets = (25, 50)
-        self.assertTrue(self.testgfx.x_offset == 25)
-        self.assertTrue(self.testgfx.y_offset == 50)
+        testgfx = self.wad.graphics['HELP1']
+        testgfx.offsets = (25, 50)
+        self.assertTrue(testgfx.x_offset == 25)
+        self.assertTrue(testgfx.y_offset == 50)
         
-        self.assertTrue(self.testgfx.dimensions == (320, 200))
+        self.assertTrue(testgfx.dimensions == (320, 200))
 
     def test_graphic_raw(self):
+        testgfx = self.wad.graphics['HELP1']
         test = omg.lump.Graphic()
-        raw = self.testgfx.to_raw()
+        raw = testgfx.to_raw()
         
-        test.from_raw(raw, *self.testgfx.dimensions)
+        test.from_raw(raw, *testgfx.dimensions)
         self.assertTrue(test.to_raw() == raw)
     
     def test_graphic_Image(self):
+        testgfx = self.wad.graphics['HELP1']
         test = omg.lump.Graphic()
-        image = self.testgfx.to_Image()
+        image = testgfx.to_Image()
         
         # test without remapping palette (both images already use the same default palette)
         test.from_Image(image)
@@ -66,96 +71,77 @@ class TestLump(unittest.TestCase):
         diff = ImageChops.difference(new_image.convert("RGB"), image.convert("RGB")).getbbox()
         self.assertTrue(diff is None)
 
-class TestMapeditReading(unittest.TestCase):
-    def setUp(self):
-        testwad = omg.WAD('test.wad')
-        self.testmap = omg.mapedit.MapEditor(testwad.maps['MAP01'])
-
-    def test_counts(self):
-        self.assertTrue(len(self.testmap.things) == 103)
-        self.assertTrue(len(self.testmap.linedefs) == 653)
-        self.assertTrue(len(self.testmap.sidedefs) == 958)
-        self.assertTrue(len(self.testmap.vertexes) == 581)
-        self.assertTrue(len(self.testmap.segs) == 1030)
-        self.assertTrue(len(self.testmap.ssectors) == 268)
-        self.assertTrue(len(self.testmap.nodes) == 267)
-        self.assertTrue(len(self.testmap.sectors) == 130)
-
-class TestMapeditDrawSector(unittest.TestCase):
-    def setUp(self):
-        self.m = omg.mapedit.MapEditor()
-        pass
+    #
+    # maps
+    #
+    def test_map_counts(self):
+        testmap = omg.mapedit.MapEditor(self.wad.maps['MAP01'])
+        self.assertTrue(len(testmap.things) == 103)
+        self.assertTrue(len(testmap.linedefs) == 653)
+        self.assertTrue(len(testmap.sidedefs) == 958)
+        self.assertTrue(len(testmap.vertexes) == 581)
+        self.assertTrue(len(testmap.segs) == 1030)
+        self.assertTrue(len(testmap.ssectors) == 268)
+        self.assertTrue(len(testmap.nodes) == 267)
+        self.assertTrue(len(testmap.sectors) == 130)
 
     def test_draw_simple_sector(self):
+        mapedit = omg.mapedit.MapEditor()
         verts = []
         verts.append(omg.mapedit.Vertex(x=0,y=0))
         verts.append(omg.mapedit.Vertex(x=64,y=0))
         verts.append(omg.mapedit.Vertex(x=64,y=64))
         verts.append(omg.mapedit.Vertex(x=0,y=64))
-        self.m.draw_sector(verts)
-        self.assertTrue(len(self.m.vertexes) == 4)
-        self.assertTrue(len(self.m.linedefs) == 4)
-        self.assertTrue(len(self.m.sidedefs) == 4)
-        self.assertTrue(len(self.m.sectors) == 1)
+        mapedit.draw_sector(verts)
+        self.assertTrue(len(mapedit.vertexes) == 4)
+        self.assertTrue(len(mapedit.linedefs) == 4)
+        self.assertTrue(len(mapedit.sidedefs) == 4)
+        self.assertTrue(len(mapedit.sectors) == 1)
         
-#    def test_draw_sector_return_value(self):
-#        verts = []
-#        verts.append(omg.mapedit.Vertex(x=0,y=0))
-#        verts.append(omg.mapedit.Vertex(x=64,y=0))
-#        verts.append(omg.mapedit.Vertex(x=64,y=64))
-#        verts.append(omg.mapedit.Vertex(x=0,y=64))
-#        lines = self.m.draw_sector(verts)
-#        self.assertTrue(len(lines)==4)
-
     def test_draw_many_sectors(self):
         for x in range(100):
-            self.m = omg.mapedit.MapEditor()
+            mapedit = omg.mapedit.MapEditor()
             n = random.randint(4,20)
             verts = []
             for x in range(n):
                 verts.append(omg.mapedit.Vertex(x=random.randint(-30000,30000),y=random.randint(-30000,30000)))
-            self.m.draw_sector(verts)
-            self.assertTrue(len(self.m.vertexes) == n)
-            self.assertTrue(len(self.m.linedefs) == n)
-            self.assertTrue(len(self.m.sidedefs) == n)
-            self.assertTrue(len(self.m.sectors) == 1)
+            mapedit.draw_sector(verts)
+            self.assertTrue(len(mapedit.vertexes) == n)
+            self.assertTrue(len(mapedit.linedefs) == n)
+            self.assertTrue(len(mapedit.sidedefs) == n)
+            self.assertTrue(len(mapedit.sectors) == 1)
 
-
-
-# class TestPalette(unittest.TestCase):
-#     def setUp(self):
-#         pass
-
-#     def test_farts(self):
-#         pass
-
-
-class TestPlaypal(unittest.TestCase):
-    def setUp(self):
-        testwad = omg.WAD('test.wad')
-        self.testpal = testwad.data['PLAYPAL']
-        self.pal = omg.playpal.Playpal()
-
-    def test_lump(self):
-        self.pal.from_lump(self.testpal)
-        lump = self.pal.to_lump()
+    #
+    # playpal
+    #
+    def test_playpal(self):
+        testpal = self.wad.data['PLAYPAL']
+        pal = omg.playpal.Playpal()
+        pal.from_lump(testpal)
+        lump = pal.to_lump()
         
         self.assertTrue(isinstance(lump, omg.Lump))
         # compare default constructed palette against one from test.wad
-        self.assertTrue(lump.data == self.testpal.data)
+        self.assertTrue(lump.data == testpal.data)
     
-    def test_build(self):
-        self.pal = omg.playpal.Playpal()
-        self.pal.build_defaults()
+    def test_playpal_build(self):
+        pal = omg.playpal.Playpal()
+        pal.build_defaults()
 
-
-# class TestTxdef(unittest.TestCase):
-#     def setUp(self):
-#         pass
-
-#     def test_farts(self):
-#         pass
-
+    #
+    # textures
+    #
+    def test_txdef_unpack(self):
+        textures = omg.txdef.Textures(self.wad.txdefs)
+        
+        texture = textures['AASHITTY']
+        self.assertTrue(texture.patches[0].name == 'BODIES')
+        pass
+    
+    def test_txdef_pack(self):
+        textures = omg.txdef.Textures(self.wad.txdefs)
+        textures.to_lumps()
+        pass
 
 # class TestUtil(unittest.TestCase):
 #     def setUp(self):
