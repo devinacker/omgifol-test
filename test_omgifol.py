@@ -19,8 +19,6 @@ class OmgifolTest(unittest.TestCase):
         col.from_lump(testcol)
         lump = col.to_lump()
         
-        self.assertTrue(isinstance(lump, omg.Lump))
-        # compare default constructed colormap against one from test.wad
         self.assertTrue(lump.data == testcol.data)
     
     def test_colormap_build(self):
@@ -120,8 +118,6 @@ class OmgifolTest(unittest.TestCase):
         pal.from_lump(testpal)
         lump = pal.to_lump()
         
-        self.assertTrue(isinstance(lump, omg.Lump))
-        # compare default constructed palette against one from test.wad
         self.assertTrue(lump.data == testpal.data)
     
     def test_playpal_build(self):
