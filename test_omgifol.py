@@ -34,7 +34,7 @@ class OmgifolTest(unittest.TestCase):
         copy = testgfx.copy()
         
         self.assertTrue(copy is not testgfx)
-        self.assertTrue(copy.to_raw() == testgfx.to_raw())
+        self.assertTrue(copy.to_pixels() == testgfx.to_pixels())
 
     def test_graphic_attr(self):
         testgfx = self.wad.graphics['HELP1']
@@ -47,27 +47,36 @@ class OmgifolTest(unittest.TestCase):
     def test_graphic_raw(self):
         testgfx = self.wad.graphics['HELP1']
         test = omg.lump.Graphic()
-        raw = testgfx.to_raw()
+        raw = testgfx.to_pixels()
         
-        test.from_raw(raw, *testgfx.dimensions)
-        self.assertTrue(test.to_raw() == raw)
+        test.from_pixels(raw, *testgfx.dimensions)
+        self.assertTrue(test.to_pixels() == raw)
     
     def test_graphic_Image(self):
         testgfx = self.wad.graphics['HELP1']
         test = omg.lump.Graphic()
-        image = testgfx.to_Image()
         
-        # test without remapping palette (both images already use the same default palette)
+        # test 32-bit
+        image = testgfx.to_Image('RGBA')
         test.from_Image(image)
-        new_image = test.to_Image()
+        new_image = test.to_Image('RGBA')
         diff = ImageChops.difference(new_image, image).getbbox()
         self.assertTrue(diff is None)
         
-        # test with palette mapping
+        # test 8-bit with palette mapping
+        image = testgfx.to_Image('P')
         test.from_Image(image, translate=True)
         new_image = test.to_Image()
         diff = ImageChops.difference(new_image.convert("RGB"), image.convert("RGB")).getbbox()
         self.assertTrue(diff is None)
+
+    def test_graphic_tall(self):
+        testgfx = self.wad.graphics['HELP']
+        test = omg.lump.Graphic()
+        raw = testgfx.to_pixels()
+        
+        test.from_pixels(raw, *testgfx.dimensions)
+        self.assertTrue(test.to_pixels() == raw)
 
     #
     # maps
